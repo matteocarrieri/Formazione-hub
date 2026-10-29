@@ -1,0 +1,244 @@
+<!DOCTYPE html><html lang="it"><head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Formazione Hub — elaboratore Excel locale</title>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      --ink: #152033; --muted: #667085; --line: #e3e8ef; --bg: #f5f7fb;
+      --card: #fff; --brand: #2257d9; --brand-2: #173d9a; --ok: #18865b;
+      --warn: #a15c00; --soft: #edf3ff; --shadow: 0 12px 34px rgba(30,45,80,.08);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: var(--ink); background: var(--bg); font: 14px/1.45 Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif; }
+    header { background: linear-gradient(135deg, #132c63, #2257d9); color: white; padding: 28px max(22px, calc((100vw - 1280px)/2)); }
+    header .eyebrow { text-transform: uppercase; letter-spacing: .12em; font-size: 11px; opacity: .76; }
+    header h1 { margin: 6px 0 5px; font-size: clamp(24px, 4vw, 38px); }
+    header p { margin: 0; max-width: 800px; color: #dbe5ff; }
+    main { width: min(1280px, calc(100% - 36px)); margin: 22px auto 60px; }
+    .grid { display: grid; grid-template-columns: minmax(300px, .9fr) minmax(420px, 1.5fr); gap: 18px; align-items: start; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); padding: 18px; }
+    .card h2 { font-size: 16px; margin: 0 0 13px; }
+    .muted { color: var(--muted); }
+    .drop { border: 1.5px dashed #9bb4ec; background: var(--soft); border-radius: 13px; padding: 24px 16px; text-align: center; cursor: pointer; transition: .2s; }
+    .drop:hover, .drop.drag { border-color: var(--brand); background: #e5edff; }
+    .drop strong { display: block; font-size: 16px; margin-bottom: 5px; }
+    .drop input { display: none; }
+    .file-list { margin: 13px 0 0; padding: 0; list-style: none; max-height: 180px; overflow: auto; }
+    .file-list li { display: flex; justify-content: space-between; gap: 8px; padding: 8px 0; border-bottom: 1px solid #eef1f5; }
+    .file-list small { color: var(--muted); white-space: nowrap; }
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+    button, select, input[type="text"], input[type="date"] { border: 1px solid #cfd7e4; border-radius: 9px; padding: 9px 11px; background: white; color: var(--ink); font: inherit; }
+    button { cursor: pointer; font-weight: 650; }
+    button.primary { color: white; background: var(--brand); border-color: var(--brand); }
+    button.primary:hover { background: var(--brand-2); }
+    button.ghost { background: #f8fafc; }
+    button:disabled { opacity: .45; cursor: not-allowed; }
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 16px; }
+    .stat { border: 1px solid var(--line); border-radius: 12px; padding: 12px; background: #fbfcfe; }
+    .stat b { display: block; font-size: 25px; letter-spacing: -.03em; }
+    .stat span { color: var(--muted); font-size: 12px; }
+    .prompt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .prompt { text-align: left; font-size: 12px; font-weight: 600; min-height: 54px; }
+    .prompt.active { outline: 2px solid #9bb4ec; background: var(--soft); border-color: var(--brand); }
+    .filters { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .filters > * { flex: 1 1 150px; }
+    .notice { padding: 10px 12px; background: #fff8e9; border: 1px solid #f5d493; border-radius: 10px; color: var(--warn); margin-top: 12px; }
+    .status { padding: 10px 12px; border-radius: 10px; background: #edf9f3; color: var(--ok); margin-top: 12px; }
+    .table-wrap { overflow: auto; max-height: 500px; margin-top: 14px; border: 1px solid var(--line); border-radius: 10px; }
+    table { width: 100%; border-collapse: collapse; min-width: 720px; background: white; }
+    th, td { border-bottom: 1px solid #edf0f4; padding: 9px 10px; text-align: left; vertical-align: top; }
+    th { position: sticky; top: 0; background: #f7f9fc; font-size: 12px; color: #45526a; z-index: 1; }
+    .chip { display: inline-block; border-radius: 999px; padding: 3px 8px; background: #edf3ff; color: #244da8; font-size: 11px; font-weight: 700; }
+    .empty { padding: 30px; color: var(--muted); text-align: center; }
+    details { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 12px; }
+    summary { cursor: pointer; font-weight: 700; }
+    code { background: #f0f2f6; border-radius: 4px; padding: 1px 4px; }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } .stats { grid-template-columns: repeat(2, 1fr); } }
+  </style>
+
+</head><body>
+  <header data-cid="1CYgai">
+    <div class="eyebrow" data-cid="rpYCkr">MVP locale · dati nel browser</div>
+    <h1 data-cid="AO9ya7">Formazione Hub</h1>
+    <p data-cid="cZUYWx">Carica i file esportati dai tuoi software, uniforma i dati e interroga il risultato con 10 domande preimpostate.</p>
+  </header>
+  <main data-cid="8Vd-w-">
+    <div class="grid" data-cid="wFWeFL">
+      <section class="card" data-cid="emH8A1">
+        <h2 data-cid="kKGaju">1 · Importa i file</h2>
+        <label class="drop" id="dropZone" data-cid="9oZuYq">
+          <strong data-cid="bI960L">Trascina qui più file Excel</strong>
+          <span class="muted" data-cid="FgLUEc">oppure clicca per selezionare .xlsx, .xls o .csv</span>
+          <input id="fileInput" type="file" multiple="" accept=".xlsx,.xls,.csv" data-cid="-YbZ5C">
+        </label>
+        <ul id="fileList" class="file-list" data-cid="NLr7y5"><li class="muted" data-cid="t7eoIJ">Nessun file selezionato</li></ul>
+        <div class="actions" data-cid="fMDIkX">
+          <button class="primary" id="processBtn" disabled="" data-cid="klMrH6">Elabora e unifica</button>
+          <button class="ghost" id="clearBtn" data-cid="WFCKAP">Svuota</button>
+        </div>
+        <div id="importStatus" class="editor-empty-block" data-cid="oBydaX"></div>
+        <details data-cid="Yiw6Ij">
+          <summary data-cid="zBm-rh">Come riconosce le colonne?</summary>
+          <p class="muted" data-cid="kIL4pz">Il motore cerca automaticamente sinonimi di azienda, nome, cognome, corso, data, livello, esito, durata e fornitore. I campi non riconosciuti restano disponibili nella colonna “Extra”.</p>
+        </details>
+      </section>
+
+      <section class="card" data-cid="kOvcIQ">
+        <h2 data-cid="dpEc7S">2 · Domande operative</h2>
+        <div id="promptGrid" class="prompt-grid" data-cid="vE9ax5"><button class="prompt active" data-id="demand" data-cid="Ar0gd9">Quali formazioni sono più richieste per azienda?</button><button class="prompt " data-id="preposto" data-cid="f26TfW">Quali persone hanno la formazione da preposto?</button><button class="prompt " data-id="datore" data-cid="J21Ew-">Quali persone hanno la formazione da datore di lavoro?</button><button class="prompt " data-id="base" data-cid="ZgTo8J">Chi ha completato la formazione generale/base?</button><button class="prompt " data-id="specifica" data-cid="QP88lW">Chi ha completato la formazione specifica?</button><button class="prompt " data-id="medio" data-cid="7E1iNB">Chi ha formazione specifica per rischio medio?</button><button class="prompt " data-id="alto" data-cid="zE0D51">Chi ha formazione specifica per rischio alto?</button><button class="prompt " data-id="missing" data-cid="lB-dOF">Quali persone/aziende hanno dati formativi incompleti?</button><button class="prompt " data-id="software" data-cid="lJCz97">Qual è il contributo di ogni software sorgente?</button><button class="prompt " data-id="timeline" data-cid="Zl13lA">Quali formazioni risultano erogate nel periodo scelto?</button></div>
+        <div class="filters editor-empty-block" data-cid="_N61I7">
+          <input id="companyFilter" type="text" placeholder="Filtra per azienda (opzionale)" data-cid="chddIq">
+          <input id="searchFilter" type="text" placeholder="Cerca nome, corso o livello" data-cid="aztPJB">
+          <input id="fromDate" type="date" aria-label="Dal" data-cid="VRhy6j">
+          <input id="toDate" type="date" aria-label="Al" data-cid="AXHh-P">
+        </div>
+        <div class="actions" data-cid="F1oX_v">
+          <button class="primary" id="runBtn" disabled="" data-cid="6SpDLi">Esegui domanda</button>
+          <button class="ghost" id="exportBtn" disabled="" data-cid="niBvnF">Esporta risultato Excel</button>
+          <button class="ghost" id="exportAllBtn" disabled="" data-cid="DmQH9X">Esporta archivio unificato</button>
+        </div>
+        <div id="queryStatus" class="editor-empty-block" data-cid="Qh1FUs"></div>
+        <div id="results" data-cid="m1Latq"><div class="empty" data-cid="aXyBZR">Carica e processa almeno un file per iniziare.</div></div>
+      </section>
+    </div>
+  </main>
+
+  <script data-cid="PDv5KL">
+    const prompts = [
+      { id: "demand", label: "Quali formazioni sono più richieste per azienda?", mode: "groupCourse" },
+      { id: "preposto", label: "Quali persone hanno la formazione da preposto?", mode: "contains", value: "preposto" },
+      { id: "datore", label: "Quali persone hanno la formazione da datore di lavoro?", mode: "contains", value: "datore" },
+      { id: "base", label: "Chi ha completato la formazione generale/base?", mode: "containsAny", value: ["base", "generale"] },
+      { id: "specifica", label: "Chi ha completato la formazione specifica?", mode: "contains", value: "specifica" },
+      { id: "medio", label: "Chi ha formazione specifica per rischio medio?", mode: "containsAny", value: ["medio", "rischio 2"] },
+      { id: "alto", label: "Chi ha formazione specifica per rischio alto?", mode: "containsAny", value: ["alto", "rischio 3"] },
+      { id: "missing", label: "Quali persone/aziende hanno dati formativi incompleti?", mode: "missing" },
+      { id: "software", label: "Qual è il contributo di ogni software sorgente?", mode: "groupSoftware" },
+      { id: "timeline", label: "Quali formazioni risultano erogate nel periodo scelto?", mode: "timeline" }
+    ];
+    const aliases = {
+      company: ["azienda","ragione sociale","società","societa","ditta","company","cliente","impresa"],
+      firstName: ["nome","nome lavoratore","nome dipendente","first name","corsista"],
+      lastName: ["cognome","surname","last name"],
+      person: ["nominativo","dipendente","lavoratore","employee","persona"],
+      training: ["corso","formazione","titolo corso","nome corso","course","attività formativa","attivita formativa"],
+      date: ["data","data corso","data formazione","data erogazione","date","giorno"],
+      level: ["livello","rischio","tipo formazione","categoria","classe","level"],
+      status: ["stato","esito","completamento","superato","status"],
+      duration: ["durata","ore","hours","durata ore"],
+      provider: ["ente","fornitore","provider","organizzatore"],
+      expiry: ["scadenza","data scadenza","expiry"]
+    };
+    let selectedFiles = [], rows = [], resultRows = [], activePrompt = prompts[0];
+    const $ = id => document.getElementById(id);
+    const norm = v => String(v ?? "").trim().replace(/\s+/g, " ");
+    const key = v => norm(v).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+    function escapeHtml(v) { return norm(v).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;" }[c])); }
+    function dateValue(v) {
+      if (!v) return "";
+      if (v instanceof Date && !isNaN(v)) return v.toISOString().slice(0,10);
+      const s = norm(v), m = s.match(/(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})/);
+      if (m) return `${m[3].length === 2 ? "20"+m[3] : m[3]}-${m[2].padStart(2,"0")}-${m[1].padStart(2,"0")}`;
+      const d = new Date(s); return isNaN(d) ? s : d.toISOString().slice(0,10);
+    }
+    function canonicalHeaders(headers) {
+      const out = {};
+      Object.keys(aliases).forEach(field => {
+        const wanted = aliases[field].map(key);
+        const found = headers.find(h => wanted.some(a => key(h) === a || key(h).includes(a)));
+        if (found) out[field] = found;
+      });
+      return out;
+    }
+    function classify(r) {
+      const text = key([r.training, r.level].join(" "));
+      if (text.includes("preposto")) return "Preposto";
+      if (text.includes("datore")) return "Datore di lavoro";
+      if (text.includes("specifica") && text.includes("alto")) return "Specifica · rischio alto";
+      if (text.includes("specifica") && text.includes("medio")) return "Specifica · rischio medio";
+      if (text.includes("specifica") && text.includes("basso")) return "Specifica · rischio basso";
+      if (text.includes("specifica")) return "Formazione specifica";
+      if (text.includes("base") || text.includes("generale")) return "Formazione base/generale";
+      return norm(r.level || r.training) || "Non classificata";
+    }
+    function normalizeSheet(data, source, sheet) {
+      if (!data.length) return [];
+      const headers = Object.keys(data[0]).map(norm);
+      const map = canonicalHeaders(headers);
+      return data.map((raw, idx) => {
+        const val = field => map[field] ? norm(raw[map[field]]) : "";
+        let person = val("person");
+        const full = `${val("firstName")} ${val("lastName")}`.trim();
+        if (!person) person = full;
+        const r = { azienda: val("company"), nome: val("firstName"), cognome: val("lastName"), persona: person, formazione: val("training"), data: dateValue(val("date")), livello: val("level"), esito: val("status"), durata: val("duration"), ente: val("provider"), scadenza: dateValue(val("expiry")), software: source, foglio: sheet, riga: idx + 2 };
+        r.categoria = classify(r);
+        const used = new Set(Object.values(map));
+        r.extra = Object.entries(raw).filter(([h]) => !used.has(h) && norm(raw[h])).map(([h,v]) => `${h}: ${norm(v)}`).join(" · ");
+        return r;
+      }).filter(r => Object.values(r).some(v => norm(v)));
+    }
+    function renderFiles() {
+      $("fileList").innerHTML = selectedFiles.length ? selectedFiles.map(f => `<li><span>${escapeHtml(f.name)}</span><small>${Math.round(f.size/1024)} KB</small></li>`).join("") : `<li class="muted">Nessun file selezionato</li>`;
+      $("processBtn").disabled = !selectedFiles.length;
+    }
+    function addFiles(files) { selectedFiles = [...selectedFiles, ...Array.from(files)]; renderFiles(); }
+    $("fileInput").addEventListener("change", e => addFiles(e.target.files));
+    ["dragenter","dragover"].forEach(ev => $("dropZone").addEventListener(ev, e => { e.preventDefault(); $("dropZone").classList.add("drag"); }));
+    ["dragleave","drop"].forEach(ev => $("dropZone").addEventListener(ev, e => { e.preventDefault(); $("dropZone").classList.remove("drag"); }));
+    $("dropZone").addEventListener("drop", e => addFiles(e.dataTransfer.files));
+    $("clearBtn").addEventListener("click", () => { selectedFiles=[]; rows=[]; resultRows=[]; renderFiles(); $("results").innerHTML='<div class="empty">Carica e processa almeno un file per iniziare.</div>'; $("importStatus").innerHTML=""; $("queryStatus").innerHTML=""; $("runBtn").disabled=true; $("exportBtn").disabled=true; $("exportAllBtn").disabled=true; });
+    async function readFile(file) {
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, { type: "array", cellDates: true });
+      let out = [];
+      wb.SheetNames.forEach(sheet => out.push(...normalizeSheet(XLSX.utils.sheet_to_json(wb.Sheets[sheet], { defval: "" }), file.name, sheet)));
+      return out;
+    }
+    $("processBtn").addEventListener("click", async () => {
+      $("processBtn").disabled = true; $("importStatus").innerHTML = `<div class="status">Elaborazione in corso…</div>`;
+      try {
+        const loaded = (await Promise.all(selectedFiles.map(readFile))).flat();
+        const seen = new Set();
+        rows = loaded.filter(r => { const k = [r.azienda,r.persona,r.formazione,r.data,r.categoria].map(key).join("|"); if (seen.has(k)) return false; seen.add(k); return true; });
+        $("importStatus").innerHTML = `<div class="status">Importate ${rows.length} righe normalizzate da ${selectedFiles.length} file.</div>`;
+        $("runBtn").disabled = false; $("exportAllBtn").disabled = false; updateStats();
+        runQuery();
+      } catch (err) { $("importStatus").innerHTML = `<div class="notice">Impossibile leggere un file: ${escapeHtml(err.message || err)}</div>`; }
+      $("processBtn").disabled = false;
+    });
+    function updateStats() {
+      const companies = new Set(rows.map(r=>r.azienda).filter(Boolean)).size, people = new Set(rows.map(r=>r.persona).filter(Boolean)).size;
+      $("results").insertAdjacentHTML("afterbegin", `<div class="stats"><div class="stat"><b>${rows.length}</b><span>registrazioni</span></div><div class="stat"><b>${companies}</b><span>aziende</span></div><div class="stat"><b>${people}</b><span>persone</span></div><div class="stat"><b>${new Set(rows.map(r=>r.software)).size}</b><span>software sorgenti</span></div></div>`);
+    }
+    function filteredBase() {
+      const c = key($("companyFilter").value), s = key($("searchFilter").value), from=$("fromDate").value, to=$("toDate").value;
+      return rows.filter(r => (!c || key(r.azienda).includes(c)) && (!s || key([r.azienda,r.persona,r.formazione,r.categoria,r.livello].join(" ")).includes(s)) && (!from || !r.data || r.data >= from) && (!to || !r.data || r.data <= to));
+    }
+    function runQuery() {
+      if (!rows.length) return;
+      document.querySelectorAll(".prompt").forEach(x => x.classList.toggle("active", x.dataset.id === activePrompt.id));
+      const base=filteredBase(); let out=[];
+      if (activePrompt.mode === "groupCourse") {
+        const m = new Map(); base.forEach(r=>{ const k=`${r.azienda}|||${r.categoria||r.formazione}`; const x=m.get(k)||{azienda:r.azienda, formazione:r.categoria||r.formazione, registrazioni:0, persone:new Set()}; x.registrazioni++; if(r.persona)x.persone.add(r.persona); m.set(k,x); }); out=[...m.values()].map(x=>({...x,persone:x.persone.size})).sort((a,b)=>b.registrazioni-a.registrazioni);
+      } else if (activePrompt.mode === "groupSoftware") {
+        const m=new Map(); base.forEach(r=>{const x=m.get(r.software)||{software:r.software,registrazioni:0,aziende:new Set(),persone:new Set()};x.registrazioni++;if(r.azienda)x.aziende.add(r.azienda);if(r.persona)x.persone.add(r.persona);m.set(r.software,x)});out=[...m.values()].map(x=>({...x,aziende:x.aziende.size,persone:x.persone.size})).sort((a,b)=>b.registrazioni-a.registrazioni);
+      } else if (activePrompt.mode === "missing") out=base.filter(r=>!r.azienda||!r.persona||!r.formazione||!r.data).map(r=>({...r, campi_mancanti:[!r.azienda&&"azienda",!r.persona&&"persona",!r.formazione&&"formazione",!r.data&&"data"].filter(Boolean).join(", ") })); 
+      else if (activePrompt.mode === "timeline") out=base.sort((a,b)=>(b.data||"").localeCompare(a.data||""));
+      else out=base.filter(r=>{const t=key([r.formazione,r.livello,r.categoria].join(" "));return activePrompt.mode==="contains" ? t.includes(activePrompt.value) : activePrompt.value.some(v=>t.includes(v));});
+      resultRows=out; renderTable(out); $("exportBtn").disabled=!out.length; $("queryStatus").innerHTML=`<div class="status">${out.length} risultati · domanda: ${escapeHtml(activePrompt.label)}</div>`;
+    }
+    function renderTable(data) {
+      if (!data.length) { $("results").innerHTML='<div class="empty">Nessun risultato con i filtri correnti.</div>'; return; }
+      const cols=Object.keys(data[0]).filter(k=>k!=="extra" && k!=="persone" || data.some(x=>x[k])); 
+      $("results").innerHTML=`<div class="table-wrap"><table><thead><tr>${cols.map(c=>`<th>${escapeHtml(c)}</th>`).join("")}</tr></thead><tbody>${data.map(r=>`<tr>${cols.map(c=>`<td>${c==="categoria"?`<span class="chip">${escapeHtml(r[c])}</span>`:escapeHtml(r[c])}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+    }
+    function downloadXlsx(data, name) { const ws=XLSX.utils.json_to_sheet(data.map(r=>{const x={...r};Object.keys(x).forEach(k=>{if(x[k] instanceof Set)x[k]=x[k].size});return x;})); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Dati"); XLSX.writeFile(wb,name); }
+    $("runBtn").addEventListener("click", runQuery); ["companyFilter","searchFilter","fromDate","toDate"].forEach(id=>$(id).addEventListener("input",()=>{if(rows.length)runQuery();}));
+    $("exportBtn").addEventListener("click",()=>downloadXlsx(resultRows,"risultato_formazione.xlsx"));
+    $("exportAllBtn").addEventListener("click",()=>downloadXlsx(rows,"archivio_formazione_unificato.xlsx"));
+    $("promptGrid").innerHTML=prompts.map(p=>`<button class="prompt ${p.id==="demand"?"active":""}" data-id="${p.id}">${escapeHtml(p.label)}</button>`).join("");
+    document.querySelectorAll(".prompt").forEach(btn=>btn.addEventListener("click",()=>{activePrompt=prompts.find(p=>p.id===btn.dataset.id);if(rows.length)runQuery();}));
+  </script>
+
+</body></html>
